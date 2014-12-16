@@ -1,4 +1,4 @@
-//todo: clever debugging, tests, make client module
+//todo: clever debugging, tests
 
 // output buffer stats
 function print_buffer_stats (connection, stats) {
