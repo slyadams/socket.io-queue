@@ -4,8 +4,8 @@ function print_buffer_stats (connection, stats) {
 }
 
 var Connection = require('../lib/connection.js');
-var cli = require('commander');
 var io = require('socket.io')();
+var cli = require('commander');
 
 cli
   .version('0.0.1')
