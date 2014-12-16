@@ -1,0 +1,34 @@
+
+<html>
+<head>
+  <title>Socket.io</title>
+  <script src="https://cdn.socket.io/socket.io-1.2.1.js"></script>
+  <script type="text/javascript">
+
+
+
+    var socket = io('ws://localhost:8080/nsp');
+    socket.on('connect', function() {
+    	console.log('Connected');
+    });
+
+    var process = function(data) {
+      // plot point in chart or whatever
+      // call some method 'engine.done()''
+    }
+
+    socket.on('data', function(data, callback) {
+      console.log('Received data '+data.sequence + ", ack required=" + (callback ? 1 : 0));
+      process(data);
+      if (callback) {
+        console.log("Processing");
+
+        // simulate a delay to show processing and the fact that the server stops sending
+        setTimeout(function() {
+          callback(data.sequence);
+        }, 5000);
+      }
+    });
+  </script>
+</body>
+</html>
