@@ -16,6 +16,11 @@ if (cli.ignore_retransmit_error) {
   client.setIgnoreRetransmitErrors(true);
 }
 
+// create key handler
+var stdin = process.stdin;
+stdin.setRawMode(true);
+stdin.setEncoding('utf8');
+
 client.on('connect', function() {
   console.log('Connected');
 });
@@ -36,36 +41,27 @@ client.on('data', function(client_message) {
 });
 
 client.on('retransmit', function(data) {
-  console.log("Will get retransmit from "+data.sequence);
+  console.log("Will request retransmit");
 });
 
-client.on('control', function(data) {
-  console.log("Received control " + data.type + "(" + data.code + ") : " + data.name);
+client.on('error', function(error) {
+  console.log("Received error " + "(" + error.code + ":" + error.message + ")");
 });
 
-client.on('retransmit_error', function(data, can_continue) {
+/*client.on('retransmit_error', function(data, can_continue) {
   console.log('Retransmit errors '+can_continue);
   if (!can_continue) {
     process.exit();
   }
-});
+});*/
 
 // setup key handlers to send retransmit requests
-var s = process.stdin;
-s.setRawMode(true);
-s.setEncoding('utf8');
-
-s.on('data', function (letter) {
+stdin.on('data', function (letter) {
   if (letter == 'r') {
-    var retransmit = last_sequence - 5;
-    if (retransmit < 0) {
-      retransmit = 0;
-    }
-    console.log("Asking for retransmission from " + retransmit);
-    client.retransmit(retransmit);
+      console.log("Asking for retransmission");
+      client.retransmit();
   }
   if (letter  == '\u0003') {
     process.exit();
   }
-
 });

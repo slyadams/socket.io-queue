@@ -31,7 +31,7 @@ nsp.on('connection', function (socket) {
 	var c = new Connection(socket, window_size, buffer_size);
 	var push_data_timer = setInterval(function() { 
 		if (socket.connected) {
-			c.push_data({a: "test"});
+			c.pushData({a: "test"});
 		} else {
 			clearInterval(push_data_timer);
 		}

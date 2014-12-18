@@ -62,7 +62,7 @@ describe("Buffer tests", function() {
   });
 
   it("Buffer stats", function() {
-      expect(b.getBufferStats()).toEqual({length: 20, sent: 4, unsent: 16});
+      expect(b.getBufferStats()).toEqual({size: 100, length: 20, sent: 4, unsent: 16});
   });
 
   it("Clear sequence", function() {
@@ -72,5 +72,26 @@ describe("Buffer tests", function() {
       expect(b.get(i).getSequence()).toBe(i+5);
     }
   });
+
+  var b2 = new Buffer(10);
+
+  it("Buffer created", function() {
+    expect(b2).toBeDefined();
+  });
+
+  it("Overflow", function() {
+    for (var i=0; i<10; i++) {
+      b2.push(new Message(i, "data"));
+    }
+    var overflowPush = function() {
+      b2.push(new Message(i, "data"));
+    }
+    expect(b2.getBufferStats()).toEqual({size: 10, length: 10, sent: 0, unsent: 10});
+    expect(overflowPush).toThrow();
+  });
+
+
+
+
 
 });
