@@ -110,6 +110,4 @@ describe("Connection tests", function() {
     expect(socket.disconnect).not.toHaveBeenCalled();
   });
 
-
-
 });

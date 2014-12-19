@@ -1,31 +1,36 @@
 Retransmit ("retransmit"):
-
-  request:
-    {
-      // what sequence to retransmit from
-      sequence: sequence
-    }
-
-  response:
-    {
-      // what sequence retransmit will be from
-      sequence: sequence,
-
-      // requested retransmit sequence (i.e. request.sequence)
-      request: data.sequence
-    }
+  request/response: {}
 
 Debug ("debug)"
-
   Any object can be sent
 
 
 Control ("control")
-  {
-      type: window
-      data: {
+  request:
+    {
+      control_id: control_id,
+      control: window
+      control_parameters: {
         size: integer
       }
+    }
+
+    {
+      control_id: control_id,
+      control: pause
+      control_parameters: { }
+    }
+
+    {
+      control_id: control_id,
+      control: resume
+      control_parameters: { }
+    }
+
+  response:
+    {
+      control_id: control_id,
+      success: true/false
     }
 
 Error ("err")
@@ -37,5 +42,3 @@ Error ("err")
       message: message
     }
   
-
-data.type + "(" + data.code + ") : " + data.name
