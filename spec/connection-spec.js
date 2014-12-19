@@ -1,11 +1,5 @@
 var Connection = require('../lib/connection.js');
 
-
-var MockSocket  = function() {
-
-}
-
-
 describe("Connection tests", function() {
 
   var socket, c = null;
@@ -52,13 +46,28 @@ describe("Connection tests", function() {
     expect(socket.disconnect).not.toHaveBeenCalled();
   });
 
-  it("Windowing send size send", function() {
+  it("Complex send", function() {
     socket.on.reset();
     socket.emit.reset();
-    for (var i=1; i<=8; i++) {
+
+    // push initial messages
+    for (var i=1; i<=3; i++) {
+      c.pushData({ a: i });
+      expect(socket.emit).toHaveBeenCalledWith('data', { sequence: i, data: { a: i } }, i % 5 == 0 ? jasmine.any(Function) : null);
+    }
+
+    // retransmit part of initial window
+    socket.emit.reset();
+    c.retransmit();
+    for (var i=1; i<=3; i++) {
+      expect(socket.emit).toHaveBeenCalledWith('data', { sequence: i, data: { a: i } }, i % 5 == 0 ? jasmine.any(Function) : null);
+    }
+
+    // push more packets
+    for (var i=4; i<=8; i++) {
       c.pushData({ a: i });
       if (i<=5) {
-        expect(socket.emit).toHaveBeenCalledWith('data', { sequence: i, data: { a: i } }, i==5 ? jasmine.any(Function) : null);
+        expect(socket.emit).toHaveBeenCalledWith('data', { sequence: i, data: { a: i } }, i % 5 == 0 ? jasmine.any(Function) : null);
       } else {
         expect(socket.emit).not.toHaveBeenCalledWith('data', { sequence: i, data: { a: i } }, null);
       }
@@ -72,17 +81,29 @@ describe("Connection tests", function() {
     // valid ack
     socket.emit.reset();
     c.receiveAck(5)
-
-    for (var i=6; i<=7; i++) {
-      expect(socket.emit).toHaveBeenCalledWith('data', { sequence: i, data: { a: i } }, null);
+    for (var i=6; i<=8; i++) {
+      expect(socket.emit).toHaveBeenCalledWith('data', { sequence: i, data: { a: i } }, i % 5 == 0 ? jasmine.any(Function) : null);
     }
 
-
-    // retransmit
+    // retransmit part of a window
     socket.emit.reset();
     c.retransmit();
-    for (var i=6; i<=7; i++) {
-      expect(socket.emit).toHaveBeenCalledWith('data', { sequence: i, data: { a: i } }, null);
+    for (var i=6; i<=8; i++) {
+      expect(socket.emit).toHaveBeenCalledWith('data', { sequence: i, data: { a: i } }, i % 5 == 0 ? jasmine.any(Function) : null);
+    }
+
+    // push rest of the window
+    socket.emit.reset();
+    for (var i=9; i<=10; i++) {
+      c.pushData({ a: i });
+      expect(socket.emit).toHaveBeenCalledWith('data', { sequence: i, data: { a: i } }, i % 5 == 0 ? jasmine.any(Function) : null);
+    }
+
+    // retransmit full window
+    socket.emit.reset();
+    c.retransmit();
+    for (var i=6; i<=10; i++) {
+      expect(socket.emit).toHaveBeenCalledWith('data', { sequence: i, data: { a: i } }, i % 5 == 0 ? jasmine.any(Function) : null);
     }
 
     expect(socket.on).not.toHaveBeenCalled();
