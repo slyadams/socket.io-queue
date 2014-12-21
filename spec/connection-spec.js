@@ -1,6 +1,6 @@
 var Connection = require('../lib/connection.js');
 
-describe("Connection tests", function() {
+describe("Connection", function() {
 
   var socket, c = null;
   beforeEach(function() {
@@ -16,20 +16,20 @@ describe("Connection tests", function() {
     c = new Connection(socket, 5, 10);
   });
 
-  it("Connection created", function() {
+  it("created", function() {
     expect(c).toBeDefined();
   });
 
-  it("Window size set correctly", function() {
+  it("has correct window size", function() {
     expect(c.getWindowSize()).toBe(5);
   });
 
-  it("Buffer created", function() {
+  it("has buffer", function() {
     expect(c.getBuffer()).toBeDefined();
     expect(c.getBuffer().getBufferStats().size).toBe(10);
   });
 
-  it("Blank send", function() {
+  it("doesn't send when empty", function() {
     socket.on.reset();
     c.sendData();
     expect(socket.emit).not.toHaveBeenCalled();
@@ -37,7 +37,7 @@ describe("Connection tests", function() {
     expect(socket.disconnect).not.toHaveBeenCalled();
   });
 
-  it("Simple send", function() {
+  it("sends single buffer message", function() {
     socket.on.reset();
     socket.emit.reset();
     c.pushData({a : 1});
@@ -46,7 +46,7 @@ describe("Connection tests", function() {
     expect(socket.disconnect).not.toHaveBeenCalled();
   });
 
-  it("Complex send", function() {
+  it("sends multiple messages", function() {
     socket.on.reset();
     socket.emit.reset();
 

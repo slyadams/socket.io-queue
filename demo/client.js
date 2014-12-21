@@ -16,6 +16,8 @@ if (cli.ignore_retransmit_error) {
   client.setIgnoreRetransmitErrors(true);
 }
 
+var last_sequence = 0;
+
 // create key handler
 var stdin = process.stdin;
 stdin.setRawMode(true);
@@ -29,7 +31,6 @@ client.on('disconnect', function() {
   console.log('Disconnected');
 });
 
-var last_sequence = 0;
 client.on('data', function(client_message) {
   console.log('Received data '+client_message.getSequence() + ", ack required=" + client_message.needsAck());
 

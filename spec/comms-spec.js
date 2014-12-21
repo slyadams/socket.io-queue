@@ -11,7 +11,7 @@ function pushData(connection, num_packets, counter) {
   }
 }
 
-describe("Communication", function() {
+describe("Full communication", function() {
   var stubs, client, nsp, captured_data;
 
   beforeEach(function() {
@@ -39,7 +39,7 @@ describe("Communication", function() {
     io.close();
   });
 
-  it("initial test", function() {
+  it("streams with acks", function() {
 
     var _buffer = 5,
         _window = 5,

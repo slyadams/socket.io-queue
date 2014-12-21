@@ -1,36 +1,36 @@
 var ClientMessage = require('../lib/client-message.js');
 
-describe("Client Message tests", function() {
+describe("Client Message", function() {
   var m = new ClientMessage(101, {a: 1});
-
-  it("Client message created", function() {
-    expect(m).toBeDefined();
-  });
-
-  it("No ack", function() {
-    expect(m.needsAck()).toBe(false);
-  });
-
-  it("Sequence set correctly", function() {
-    expect(m.getSequence()).toBe(101);
-  });
-
-  it("Data defined", function() {
-    expect(m.getData()).toBeDefined();
-  });
-
-  it("No ack done fires", function() {
-    expect(m.done()).toBe(undefined);
-  });
-
   var m2 = new ClientMessage(101, {a: 1}, function() { return 123;});
 
-  it("Ack", function() {
+  it("is created", function() {
+    expect(m).toBeDefined();
+    expect(m2).toBeDefined();
+  });
+
+  it("will ack", function() {
     expect(m2.needsAck()).toBe(true);
   });
 
-  it("Ack done fires", function() {
+  it("will not ack", function() {
+    expect(m.needsAck()).toBe(false);
+  });
+
+  it("acks", function() {
     expect(m2.done()).toBe(123);
+  });
+
+  it("doesn't ack", function() {
+    expect(m.done()).toBe(undefined);
+  });
+
+  it("sets sequence", function() {
+    expect(m.getSequence()).toBe(101);
+  });
+
+  it("has data", function() {
+    expect(m.getData()).toBeDefined();
   });
 
 });
