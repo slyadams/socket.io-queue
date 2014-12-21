@@ -5,8 +5,9 @@
   //- this is the directory that the new files will be. it will be created if it doesn't exist
   dir: "../client-app-build",
   paths: {
-    //debug: 'libs/require/order',
-    //jquery: 'libs/jquery/jquery-min',
+
+    debug: 'c:\\Users\\sadams\\node_modules\\debug/debug',
+    //events: 'libs/jquery/jquery-min',
     //underscore: 'libs/underscore/underscore-loader',
     //backbone: 'libs/backbone/backbone-loader',
     //text: 'libs/require/text',
@@ -17,7 +18,7 @@
   //optimizeCss: "standard.keepLines",
   modules: [
     {
-      name: "main"
+      name: "client"
     }
   ],
   fileExclusionRegExp: /\.git/
