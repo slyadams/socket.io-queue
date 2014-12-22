@@ -32,6 +32,10 @@ describe("Client", function() {
 
   it("is created", function() {
     expect(c).toBeDefined();
+    var cons = [function () { new Client(); },
+                function () { new Client(12); },
+                function () { new Client('url', 'string'); }].
+               forEach(function(f) { expect(f).toThrow() });
   });
 
   it("closes", function() {
@@ -57,6 +61,12 @@ describe("Client", function() {
   it("sets window", function() {
     var control = c.setWindow(10);
     _checkControlResult(socket, control, Control.WINDOW, { size: 10 });
+
+    var sets = [function() { c.setWindow(); },
+                function() { c.setWindow(undefined); },
+                function() { c.setWindow(-2); },
+                function() { c.setWindow(4.5); }].
+               forEach(function(f) { expect(f).toThrow() });
   });
 
 });

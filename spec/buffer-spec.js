@@ -8,6 +8,9 @@ describe("Buffer", function() {
   it("is created", function() {
     expect(b).toBeDefined();
     expect(b2).toBeDefined();
+    var cons = [function() { new Buffer(-1); },
+                function() { new Buffer(0.5); }].
+                forEach(function(f) { expect(f).toThrow() });
   });
 
   it("pushes messages", function() {
@@ -15,16 +18,22 @@ describe("Buffer", function() {
     expect(b.getLength()).toBe(1);
     b.push(new Message(101, {a:11}));
     expect(b.getLength()).toBe(2);
+    var pushes = [function() { b2.push(); }].
+                forEach(function(f) { expect(f).toThrow() });
+    expect(b2.getLength()).toBe(0);
   });
 
   it("gets messages", function() {
     var m = b.get(0);
     expect(m.getData()).toEqual({a:10});
     expect(m.getSequence()).toBe(100);
-    m = b.get(1);
-    expect(m.getData()).toEqual({a:11});
-    expect(m.getSequence()).toBe(101);
+    var m2 = b.get(1);
+    expect(m2.getData()).toEqual({a:11});
+    expect(m2.getSequence()).toBe(101);
 
+    expect(b.get(2)).toBe(undefined);
+    expect(b.get(2.5)).toBe(undefined);
+    expect(b.get(-2)).toBe(undefined);
   });
 
   it("shifts messages", function() {
@@ -32,10 +41,15 @@ describe("Buffer", function() {
     expect(b.getLength()).toBe(1);
     expect(m.getData()).toEqual({a:10});
     expect(m.getSequence()).toBe(100);
+    expect(b.shift()).toBeDefined();
+    expect(b.shift()).toBe(undefined);
   });
 
-
   it("clears", function() {
+    for (var i=0; i<20; i++) {
+      b.push(new Message(i, "data"));
+    }
+    expect(b.getLength()).toBe(20);
     b.clear();
     expect(b.getLength()).toBe(0);
   });
@@ -61,6 +75,12 @@ describe("Buffer", function() {
     for (var i=0; i<20; i++) {
       expect(b.get(i).getSent()).toBe(sents[i]);
     }
+
+    var unsends = [function() { b.unSend(); },
+                   function() { b.unSend(undefined); },
+                   function() { b.unSend(-2); }].
+                  forEach(function(f) { expect(f).toThrow() });
+
   });
 
   it("returns stats", function() {
@@ -73,8 +93,12 @@ describe("Buffer", function() {
     for (var i=0; i<b.getLength(); i++) {
       expect(b.get(i).getSequence()).toBe(i+5);
     }
-  });
 
+    var clears = [function() { b.clearSequence(); },
+                  function() { b.clearSequence(undefined); },
+                  function() { b.clearSequence(-2); }].
+                forEach(function(f) { expect(f).toThrow() });
+  });
 
   it("overflows", function() {
     for (var i=0; i<10; i++) {
@@ -86,9 +110,5 @@ describe("Buffer", function() {
     expect(b2.getBufferStats()).toEqual({size: 10, length: 10, sent: 0, unsent: 10});
     expect(overflowPush).toThrow();
   });
-
-
-
-
 
 });

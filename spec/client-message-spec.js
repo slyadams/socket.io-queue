@@ -7,6 +7,13 @@ describe("Client Message", function() {
   it("is created", function() {
     expect(m).toBeDefined();
     expect(m2).toBeDefined();
+
+
+    var cons = [function() { new ClientMessage(); }, 
+                function() { new ClientMessage(0.5); },
+                function() { new ClientMessage(1); },
+                function() { new ClientMessage(1, 3, 'string'); }].
+              forEach(function(f) { expect(f).toThrow() });
   });
 
   it("will ack", function() {

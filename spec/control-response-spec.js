@@ -10,6 +10,16 @@ describe("Control Response", function() {
   it("is created", function() {
     expect(cr).toBeDefined();
     expect(cr2).toBeDefined();
+
+    var cons = [function() { new ControlReponse();},
+                function() { new ControlReponse(1);},
+                function() { new ControlReponse(undefined,1);},
+                function() { new ControlReponse({});},
+                function() { new ControlReponse({control_id:1});},
+                function() { new ControlReponse({success:1});},
+                function() { new ControlReponse({control_id: 'string', success:true});},
+                function() { new ControlReponse({control_id: 1, success:21});}
+                ].forEach(function(f) { expect(f).toThrow() });
   });
 
   it("has content", function() {  

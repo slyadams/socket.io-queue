@@ -5,6 +5,13 @@ describe("Message", function() {
 
   it("is created", function() {
     expect(m).toBeDefined();
+
+
+   var cons = [function() { new Message(); },
+               function() { new Message(1); },
+               function() { new Message(0.5, 'string'); },
+               function() { new Message(undefined, 'string'); }
+              ].forEach(function(f) { expect(f).toThrow() });
   });
 
   it("defaults correctly", function() {
@@ -16,6 +23,11 @@ describe("Message", function() {
     expect(m.getSent()).toBe(true);
     m.setSent(false);
     expect(m.getSent()).toBe(false);
+
+    var sets = [function() { m.setSent('string') },
+                function() { m.setSent(1) },
+                function() { m.setSent() }
+               ].forEach(function(f) { expect(f).toThrow() });
   });
 
   it("sets sequence", function() {

@@ -16,8 +16,11 @@ describe("Connection", function() {
     c = new Connection(socket, 5, 10);
   });
 
-  it("created", function() {
+  it("is created", function() {
     expect(c).toBeDefined();
+
+    var cons = [function() { new Connection();}].
+               forEach(function(f) { expect(f).toThrow() });
   });
 
   it("has correct window size", function() {
@@ -31,6 +34,10 @@ describe("Connection", function() {
 
   it("doesn't send when empty", function() {
     socket.on.reset();
+
+    var pushes = [function() { c.pushData();}].
+                  forEach(function(f) { expect(f).toThrow() });
+
     c.sendData();
     expect(socket.emit).not.toHaveBeenCalled();
     expect(socket.on).not.toHaveBeenCalled();
@@ -76,6 +83,12 @@ describe("Connection", function() {
     // invalid ack
     socket.emit.reset();
     c.receiveAck(2);
+    expect(socket.emit).not.toHaveBeenCalled();
+
+    // blank ack
+    socket.emit.reset();
+    var acks = [function() { c.receiveAck();}].
+                forEach(function(f) { expect(f).toThrow() });
     expect(socket.emit).not.toHaveBeenCalled();
 
     // valid ack
