@@ -1,6 +1,11 @@
+// pretty console print
+function consolePrint(conn, data) {
+  console.log(conn.getConnectionID() + "::" + data);
+}
+
 // output buffer stats
-function print_buffer_stats (connection, stats) {
-		console.log(connection.getConnectionID() + ' :: Buffer size ' + stats.length + "/" + stats.size + " (" + stats.sent + " sent / "  + stats.unsent + " unsent)");
+function print_buffer_stats (conn, stats) {
+  consolePrint(conn, "Buffer size " + stats.length + "/" + stats.size + " (" + stats.sent + " sent / "  + stats.unsent + " unsent)");
 }
 
 var Connection = require('../lib/connection.js');
@@ -28,10 +33,31 @@ io.listen(port);
 // you can pass in a parameter to control how often to push data
 
 nsp.on('connection', function (socket) {
-	var c = new Connection(socket, window_size, buffer_size);
+	var conn = new Connection(socket, window_size, buffer_size);
+
+  conn.on('ack', function(sequence) {
+    consolePrint(conn, "Received ack " + sequence);
+  });
+
+  conn.on('retransmit', function() {
+    consolePrint(conn, "Retransmit requested");
+  });
+
+  conn.on('debug', function(data) {
+    consolePrint(conn, "Debug ("+data+")");
+  });
+
+  conn.on('control', function(control) {
+    consolePrint(conn, "Received control ("+control.getRequest()+")");
+  });
+
+  conn.on('disconnect', function() {
+    consolePrint(conn, "Disconnected");
+  });
+
 	var push_data_timer = setInterval(function() { 
 		if (socket.connected) {
-			c.pushData({a: "test"});
+			conn.pushData({a: "test"});
 		} else {
 			clearInterval(push_data_timer);
 		}
@@ -40,7 +66,7 @@ nsp.on('connection', function (socket) {
 	if (buffer_display_delay > 0) {
 		var buffer_print_timer = setInterval(function() {
 			if (socket.connected) {
-				print_buffer_stats(c, c.getBuffer().getBufferStats()); 
+				print_buffer_stats(conn, conn.getBuffer().getBufferStats()); 
 			} else {
 				clearInterval(buffer_print_timer);
 			}

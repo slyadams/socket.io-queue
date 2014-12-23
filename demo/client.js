@@ -49,6 +49,10 @@ client.on('error', function(error) {
   console.log("Received error " + "(" + error.code + ":" + error.message + ")");
 });
 
+
+client.on('control', function(control) {
+  console.log("Received control response " + "(" + control.format() + ")");
+});
 /*client.on('retransmit_error', function(data, can_continue) {
   console.log('Retransmit errors '+can_continue);
   if (!can_continue) {
@@ -71,6 +75,10 @@ stdin.on('data', function (letter) {
     case 'r': console.log("Resuming");
               client.resume();
               break;
+    case 'd': console.log("Debugging");
+              client.debug("debug data");
+              break;
+
     case '1': client.setWindow(1); break;
     case '2': client.setWindow(2); break;
     case '3': client.setWindow(3); break;
