@@ -1,22 +1,13 @@
-if (typeof define !== 'function') {
-    var define = require('amdefine')(module);
-}
+var Connection = require('./lib/connection.js');
+var Client = require('./lib/client.js');
 
-define(['./lib/connection.js', './lib/client.js'],
-
-    function(Connection, Client) {
-        var constructor = function(type) {
-            if (type == 'client') {
-                return Client;
-            } else if (type == 'server') {
-                return Connection;
-            } else {
-                console.log("Don't recognize type " + type);
-                throw TypeError("Expected 'client' or 'server'");
-            }
-        }
-
-        return constructor;
+module.exports = exports = function(type) {
+    if (type == 'client') {
+        return Client;
+    } else if (type == 'server') {
+        return Connection;
+    } else {
+        console.log("Don't recognize type " + type);
+        throw TypeError("Expected 'client' or 'server'");
     }
-
-);
+}

@@ -1,9 +1,7 @@
-//var requirejs = require('requirejs');
+var Client = require('../../../')('client');
+var client = new Client('ws://localhost:8080/nsp');
 
-//requirejs(['../../../lib/client.js'], function(Client) {
-//  console.log(Client);
-//});
-alert("hi");
-requirejs(['../../lib/client.js'], function(Client) {
-
+client.on('data', function(client_message) {
+    console.log("Received data " + client_message.getSequence());
+    client_message.done();
 });
