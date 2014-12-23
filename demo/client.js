@@ -1,4 +1,4 @@
-var Client = require('../lib/client.js');
+var Client = require('../')('client');
 
 var cli = require('commander');
 

@@ -1,5 +1,6 @@
-var Connection = require('../lib/connection.js');
-var Client = require('../lib/client.js');
+var Connection = require('../')('server');
+var Client = require('../')('client');
+
 var io = require('socket.io')();
 
 function pushData(connection, num_packets, counter) {

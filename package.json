@@ -25,13 +25,10 @@
     "socket.io": ">=1.2.1",
     "socket.io-client": ">=1.2.1",
     "amdefine" : ">=0.1.0",
-
     "debug": "0.7.4"
-
-    },
-
+  },
   "devDependencies": {
-    "jasmine-node": ">=1.14.5",
+    "jasmine-node": ">=1.14.5"
   },
   "contributors": [
     {
@@ -43,5 +40,3 @@
     "node": "*"
   }
 }
-
-//events, socket.io, socket.io-client, debug, amdefine

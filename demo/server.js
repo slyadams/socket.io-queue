@@ -8,7 +8,7 @@ function print_buffer_stats(conn, stats) {
     consolePrint(conn, "Buffer size " + stats.length + "/" + stats.size + " (" + stats.sent + " sent / " + stats.unsent + " unsent)");
 }
 
-var Connection = require('../lib/connection.js');
+var Connection = require('../')('server');
 var io = require('socket.io')();
 var cli = require('commander');
 
