@@ -1,6 +1,6 @@
 # socket.io-queue
 
-socket-io-queue is an windowed, acknowledgement based message queue using socket.io as a transport. It uses a 
+socket-io-queue is a windowed, acknowledgement based message queue using socket.io as a transport. It uses a 
 configurable buffer and window and supports retransmits, pausing and resuming.
 
 ## How to use
