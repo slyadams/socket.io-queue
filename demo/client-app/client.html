@@ -1,9 +1,77 @@
 
 <html>
 <head>
-  <title>socket.io-queue demo</title>
-  <script src="js/client_bundle.js"></script>
+    <title>socket.io-queue demo</title>
+
+
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">
+    <link rel="stylesheet" href="css/styles.css">
+
+    <script src="http://code.jquery.com/jquery-2.1.3.min.js"></script>
+
+    <!-- Latest compiled and minified JavaScript -->
+    <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js"></script>
+
+    <script src="js/client_bundle.js"></script>
+
 </head>
 <body>
+
+<div class="container">
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="input-group">
+                <span class="input-group-addon" id="ws">ws://</span>
+                <input type="text" class="form-control" value="localhost:8080/nsp" id="url" aria-describedby="basic-addon1">
+                <div class="input-group-btn">
+                    <button type="button" class="btn btn-default" id="connect_button">Connect</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12" align="right">
+            <div class="btn-group">
+                <button type="button" id="pause_button" class="btn btn-warning control-button" disabled>Pause</button>
+                <button type="button" id="resume_button" class="btn btn-success control-button" disabled>Resume</button>
+                <button type="button" id="retransmit_button" class="btn btn-info control-button" disabled>Retransmit</button>
+            </div>
+            <div class="btn-group">
+                <button type="button" class="btn btn-default dropdown-toggle control-button" data-toggle="dropdown" aria-expanded="false" disabled>
+                    Window<span class="caret"></span>
+                </button>
+                <ul class="dropdown-menu" role="menu">
+                    <li><a href="#" id="window_1">1</a></li>
+                    <li><a href="#" id="window_2">2</a></li>
+                    <li><a href="#" id="window_3">3</a></li>
+                    <li><a href="#" id="window_4">4</a></li>
+                    <li><a href="#" id="window_5">5 (default)</a></li>
+                    <li><a href="#" id="window_6">6</a></li>
+                    <li><a href="#" id="window_7">7</a></li>
+                    <li><a href="#" id="window_8">8</a></li>
+                    <li><a href="#" id="window_9">9</a></li>
+                    <li><a href="#" id="window_10">10</a></li>
+                </ul>
+          </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-4">
+            <h4>Data</h4>
+            <div id="data_container" class="content-div"></div>
+        </div>
+        <div class="col-md-4">
+            <h4>Errors</h4>
+            <div id="error_container" class="content-div"></div>
+        </div>
+        <div class="col-md-4">
+            <h4>Debug</h4>
+            <div id="debug_container" class="content-div"></div>
+        </div>
+</div>
+
 </body>
 </html>

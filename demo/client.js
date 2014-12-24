@@ -42,13 +42,12 @@ client.on('data', function(client_message) {
 });
 
 client.on('retransmit', function(data) {
-    console.log("Will request retransmit");
+    console.log("Will receive retransmit");
 });
 
 client.on('error', function(error) {
     console.log("Received error " + "(" + error.code + ":" + error.message + ")");
 });
-
 
 client.on('control', function(control) {
     console.log("Received control response " + "(" + control.format() + ")");

@@ -303,11 +303,91 @@ function isUndefined(arg) {
 
 },{}],2:[function(require,module,exports){
 var Client = require('../../../')('client');
-var client = new Client('ws://localhost:8080/nsp');
+var client;
+//var client = new Client('ws://localhost:8080/nsp');
 
-client.on('data', function(client_message) {
-  console.log("Received data "+client_message.getSequence());
-  client_message.done();
+function log(container, content) {
+    container.prepend("<div>"+content+"</div>");    
+}
+
+function setButtonsDisabled(disabled) {
+    $(".control-button").attr('disabled', disabled);
+}
+
+$(document).ready(function() {
+
+    $("#connect_button").click(function() {
+        console.log("Client = "+client);
+        if (client == undefined) {
+            alert('creating');
+            var _url = "ws://" + $("#url").val();
+            console.log("Connecting to '"+_url+"'");
+            var client = new Client(_url);
+            var _data_container = $("#data_container");
+            var _error_container = $("#error_container");
+            var _debug_container = $("#debug_container");
+            $(this).html("Disconnect");
+
+            client.on('connect', function() {
+                log(_debug_container, 'Connected');
+                setButtonsDisabled(false);
+            });
+
+            client.on('disconnect', function() {
+                log(_debug_container, 'Disconnected');
+                setButtonsDisabled(true);
+            });
+
+            client.on('data', function(client_message) {
+                console.log("Received data " + client_message.getSequence());
+                log(_data_container, "Received data " + client_message.getSequence());
+                if (client_message.done()) {
+                    log(_data_container, "Sent ack");
+                }
+            });
+
+            client.on('error', function(error) {
+                log(_error_container, "Received error " + "(" + error.code + ":" + error.message + ")");
+            });
+
+            client.on('control', function(control) {
+                log(_debug_container, "Received control response " + "(" + control.format() + ")");
+            });
+        } else {
+            console.log("Disconnecting");
+            client.close();
+            client = undefined;
+            $(this).html("Connect");
+        }
+    });
+
+    $("#pause_button").click(function() {
+        if (client) {
+            console.log("Pausing");
+            client.pause();
+        }
+    });
+
+    $("#resume_button").click(function() {
+        if (client) {
+            console.log("Resuming");
+            client.resume();
+        }
+    });
+
+    $("#retransmit_button").click(function() {
+        if (client) {
+            console.log("Retransmit");
+            client.retransmit();
+        }
+    });
+
+    for (var i=1; i<=10; i++) {
+        $("#window_"+i).click(function(window_size) {
+            client.setWindow(window_size);
+        }.bind(this, i));
+    }
+
 });
 },{"../../../":3}],3:[function(require,module,exports){
 var Connection = require('./lib/connection.js');
@@ -328,150 +408,151 @@ module.exports = exports = function(type) {
 var Utils = require('./utils.js');
 var Debug = require('debug');
 
-        var debug = new Debug('socket.io-queue:buffer');
+var debug = new Debug('socket.io-queue:buffer');
 
-        function Buffer(maxBufferSize) {
+function Buffer(maxBufferSize) {
 
-            if (maxBufferSize != undefined && (!Utils.isInt(maxBufferSize) || maxBufferSize <= 0)) {
-                throw TypeError("Expected positive integer");
-            }
+    if (maxBufferSize != undefined && (!Utils.isInt(maxBufferSize) || maxBufferSize <= 0)) {
+        throw TypeError("Expected positive integer");
+    }
 
-            var _buffer = new Array();
-            var _maxBufferSize = maxBufferSize || 100;
+    var _buffer = new Array();
+    var _maxBufferSize = maxBufferSize || 100;
 
-            // standard array function
-            this.push = function(message) {
-                if (message == undefined) {
-                    throw TypeError("Expected parameter");
-                }
-                _buffer.push(message);
-                if (this.getLength() > maxBufferSize) {
-                    debug("Size " + this.getLength() + " > " + maxBufferSize + ", throwing overflow");
-                    throw new Buffer.OverFlowError();
-                }
-            }
+    // standard array function
+    this.push = function(message) {
+        if (message == undefined) {
+            throw TypeError("Expected parameter");
+        }
+        _buffer.push(message);
+        if (this.getLength() > maxBufferSize) {
+            debug("Size " + this.getLength() + " > " + maxBufferSize + ", throwing overflow");
+            throw new Buffer.OverFlowError();
+        }
+    }
 
-            this.shift = function() {
-                return _buffer.shift();
-            }
+    this.shift = function() {
+        return _buffer.shift();
+    }
 
-            this.get = function(index) {
-                // rely on built in Array error handling
-                return _buffer[index];
-            }
+    this.get = function(index) {
+        // rely on built in Array error handling
+        return _buffer[index];
+    }
 
-            this.getLength = function() {
-                return _buffer.length;
-            }
+    this.getLength = function() {
+        return _buffer.length;
+    }
 
-            this.clear = function() {
-                _buffer.length = 0;
-            }
+    this.clear = function() {
+        _buffer.length = 0;
+    }
 
-            // delete all messages which are acknowledged (i.e. <= the sequence number in the ack)
-            this.clearSequence = function(sequence) {
-                if (sequence == undefined || !Utils.isInt(sequence) || sequence < 0) {
-                    throw TypeError("Expected positive integer");
-                }
-
-                while (this.getLength() > 0 && this.get(0).getSequence() <= sequence) {
-                    var m = this.shift();
-                    debug("Cleared sequence " + m.getSequence());
-                }
-            }
-
-            // set sent=false for any sequence numbers >= from_sequence 
-            this.unSend = function(fromSequence) {
-                if (fromSequence == undefined || !Utils.isInt(fromSequence) || fromSequence < 0) {
-                    throw TypeError("Expected positive integer");
-                }
-
-                var length = this.getLength();
-                var sequence = null;
-
-                for (var i = 0; i < length; i++) {
-                    var message = this.get(i);
-                    if (message.getSequence() >= fromSequence) {
-                        debug("Unsending sequence " + message.getSequence());
-                        message.setSent(false);
-                        if (!sequence || message.getSequence() <= sequence) {
-                            sequence = message.getSequence();
-                        }
-                    }
-                }
-                return sequence;
-            }
-
-            // get buffer stats
-            this.getBufferStats = function() {
-                var length = this.getLength();
-
-                // count unmber of sent/unsent messages
-                var sent = 0,
-                    unsent = 0;
-                for (var i = 0; i < length; i++) {
-                    if (this.get(i).getSent()) {
-                        sent++;
-                    } else {
-                        unsent++;
-                    }
-                }
-                return {
-                    size: _maxBufferSize,
-                    length: length,
-                    sent: sent,
-                    unsent: unsent
-                };
-            }
-
+    // delete all messages which are acknowledged (i.e. <= the sequence number in the ack)
+    this.clearSequence = function(sequence) {
+        if (sequence == undefined || !Utils.isInt(sequence) || sequence < 0) {
+            throw TypeError("Expected positive integer");
         }
 
-        Buffer.OverFlowError = function() {}
+        while (this.getLength() > 0 && this.get(0).getSequence() <= sequence) {
+            var m = this.shift();
+            debug("Cleared sequence " + m.getSequence());
+        }
+    }
 
-module.exports=Buffer;
+    // set sent=false for any sequence numbers >= from_sequence 
+    this.unSend = function(fromSequence) {
+        if (fromSequence == undefined || !Utils.isInt(fromSequence) || fromSequence < 0) {
+            throw TypeError("Expected positive integer");
+        }
+
+        var length = this.getLength();
+        var sequence = null;
+
+        for (var i = 0; i < length; i++) {
+            var message = this.get(i);
+            if (message.getSequence() >= fromSequence) {
+                debug("Unsending sequence " + message.getSequence());
+                message.setSent(false);
+                if (!sequence || message.getSequence() <= sequence) {
+                    sequence = message.getSequence();
+                }
+            }
+        }
+        return sequence;
+    }
+
+    // get buffer stats
+    this.getBufferStats = function() {
+        var length = this.getLength();
+
+        // count unmber of sent/unsent messages
+        var sent = 0,
+            unsent = 0;
+        for (var i = 0; i < length; i++) {
+            if (this.get(i).getSent()) {
+                sent++;
+            } else {
+                unsent++;
+            }
+        }
+        return {
+            size: _maxBufferSize,
+            length: length,
+            sent: sent,
+            unsent: unsent
+        };
+    }
+
+}
+
+Buffer.OverFlowError = function() {}
+
+module.exports = Buffer;
 },{"./utils.js":11,"debug":12}],5:[function(require,module,exports){
 var Utils = require('./utils.js');
 var Debug = require('debug');
 
-        var debug = new Debug('socket.io-queue:client-message');
+var debug = new Debug('socket.io-queue:client-message');
 
-        function ClientMessage(sequence, data, ack) {
+function ClientMessage(sequence, data, ack) {
 
-            if ((sequence == undefined || !Utils.isInt(sequence)) ||
-                (data == undefined) ||
-                (ack != undefined && typeof(ack) != typeof(Function))) {
-                throw TypeError("Requires integer, data and optional ack callback");
-            }
+    if ((sequence == undefined || !Utils.isInt(sequence)) ||
+        (data == undefined) ||
+        (ack != undefined && typeof(ack) != typeof(Function))) {
+        throw TypeError("Requires integer, data and optional ack callback");
+    }
 
-            var _sequence = sequence;
-            var _data = data;
-            var _ack = ack;
+    var _sequence = sequence;
+    var _data = data;
+    var _ack = ack;
 
-            // return data
-            this.getData = function() {
-                return _data;
-            }
+    // return data
+    this.getData = function() {
+        return _data;
+    }
 
-            // return sequence
-            this.getSequence = function() {
-                return _sequence;
-            }
+    // return sequence
+    this.getSequence = function() {
+        return _sequence;
+    }
 
-            // does this message need an ack?
-            this.needsAck = function() {
-                return typeof(_ack) === typeof(Function);
-            }
+    // does this message need an ack?
+    this.needsAck = function() {
+        return typeof(_ack) === typeof(Function);
+    }
 
-            // when done() called, send ack if required
-            this.done = function() {
-                if (this.needsAck()) {
-                    debug("Sending ack for " + _sequence);
-                    return _ack(_sequence);
-                }
-            }
-
+    // when done() called, send ack if required
+    this.done = function() {
+        if (this.needsAck()) {
+            debug("Sending ack for " + _sequence);
+            _ack(_sequence);
+            return true;
         }
-module.exports=ClientMessage;
+    }
+
+}
+module.exports = ClientMessage;
 },{"./utils.js":11,"debug":12}],6:[function(require,module,exports){
 var ControlResponse = require('./control-response.js');
 var Control = require('./control.js');
@@ -482,135 +563,133 @@ var ClientMessage = require('./client-message.js');
 var io = require('socket.io-client');
 
 
-        var debug = new Debug('socket.io-queue:client');
+var debug = new Debug('socket.io-queue:client');
 
-        function Client(url, socket) {
+function Client(url, socket) {
 
-            if ((url == undefined || typeof(url) != 'string') ||
-                (socket != undefined && typeof(socket) != 'object')) {
-                throw TypeError("Expected string and optionally a socket");
-            }
+    if ((url == undefined || typeof(url) != 'string') ||
+        (socket != undefined && typeof(socket) != 'object')) {
+        throw TypeError("Expected string and optionally a socket");
+    }
 
-            // setup event listener
-            events.EventEmitter.call(this);
-            var self = this;
-            var _socket = socket || io(url);
-            var _ignoreRetransmitErrors = false;
+    // setup event listener
+    events.EventEmitter.call(this);
+    var self = this;
+    var _socket = socket || io(url);
+    var _ignoreRetransmitErrors = false;
 
-            this.test = function() {
-                return "alive";
-            }
+    this.test = function() {
+        return "alive";
+    }
 
-            this.setIgnoreRetransmitErrors = function(ignoreRetransmitErrors) {
-                _ignoreRetransmitErrors = ignoreRetransmitErrors;
-            }
+    this.setIgnoreRetransmitErrors = function(ignoreRetransmitErrors) {
+        _ignoreRetransmitErrors = ignoreRetransmitErrors;
+    }
 
-            this.setIgnoreRetransmitErrors = function(ignoreRetransmitErrors) {
-                return _ignoreRetransmitErrors;
-            }
+    this.setIgnoreRetransmitErrors = function(ignoreRetransmitErrors) {
+        return _ignoreRetransmitErrors;
+    }
 
-            // send retransmit message
-            this.retransmit = function() {
-                debug("Will request retransmit");
-                _socket.emit("retransmit");
-            }
+    // send retransmit message
+    this.retransmit = function() {
+        debug("Will request retransmit");
+        _socket.emit("retransmit");
+    }
 
-            this.setWindow = function(size) {
-                if (size == undefined || !Utils.isInt(size) || size <= 0) {
-                    throw TypeError("Expected positive integer");
-                }
-
-                var control = new Control(Control.WINDOW, Client.controlID++, {
-                    size: size
-                });
-                debug("Setting window size " + size);
-                _socket.emit('control', control.getRequest());
-                return control;
-            }
-
-            this.pause = function() {
-                var control = new Control(Control.PAUSE, Client.controlID++);
-                debug("Pausing");
-                _socket.emit('control', control.getRequest());
-                return control;
-            }
-
-            this.resume = function() {
-                var control = new Control(Control.RESUME, Client.controlID++);
-                debug("Resuming");
-                _socket.emit('control', control.getRequest());
-                return control;
-            }
-
-            this.debug = function(data) {
-                debug("Sending debug (" + data + ")");
-                _socket.emit('debug', data);
-            }
-
-            this.close = function() {
-                _socket.close();
-            }
-
-            /* core socket handlers */
-            // emit connect
-            _socket.on('connect', function() {
-                debug("Connected to " + url);
-                self.emit('connect');
-            });
-
-            // emit disconnect
-            _socket.on('disconnect', function() {
-                debug("Disconnected from " + url);
-                self.emit('disconnect');
-            });
-
-            /* data channel handlers */
-            // emit data
-            _socket.on('data', function(data, ack) {
-                debug("Received data " + data.sequence + ", ack required: " + ack ? true : false);
-                self.emit('data', new ClientMessage(data.sequence, data.data, ack));
-            });
-
-
-            /* retransmit channel handlers */
-            // emit retransmit
-            _socket.on('retransmit', function() {
-                debug("Will receive retransmit");
-                self.emit('retransmit');
-            });
-
-            /* error channel handlers */
-            // emit error
-            _socket.on('err', function(error) {
-                debug("Received error " + "(" + error.code + ":" + error.message + ")");
-                self.emit('error', error);
-            });
-
-            /* debug channel handlers */
-            // debug channel
-            _socket.on('debug', function(data) {
-                debug("Debug: " + data);
-                self.emit('debug', data);
-            });
-
-            /* control channel handlers */
-            // debug channel
-            _socket.on('control', function(control) {
-                var controlResponse = new ControlResponse(control);
-                debug("Received control response " + "(" + controlResponse.getControlID() + ":" + controlResponse.getSuccess() + ")");
-                self.emit('control', controlResponse);
-            });
-
+    this.setWindow = function(size) {
+        if (size == undefined || !Utils.isInt(size) || size <= 0) {
+            throw TypeError("Expected positive integer");
         }
 
-        Client.controlID = 0;
+        var control = new Control(Control.WINDOW, Client.controlID++, {
+            size: size
+        });
+        debug("Setting window size " + size);
+        _socket.emit('control', control.getRequest());
+        return control;
+    }
 
-        // inherit from EventEmitter
-        Client.prototype.__proto__ = events.EventEmitter.prototype;
-module.exports=Client;
+    this.pause = function() {
+        var control = new Control(Control.PAUSE, Client.controlID++);
+        debug("Pausing");
+        _socket.emit('control', control.getRequest());
+        return control;
+    }
+
+    this.resume = function() {
+        var control = new Control(Control.RESUME, Client.controlID++);
+        debug("Resuming");
+        _socket.emit('control', control.getRequest());
+        return control;
+    }
+
+    this.debug = function(data) {
+        debug("Sending debug (" + data + ")");
+        _socket.emit('debug', data);
+    }
+
+    this.close = function() {
+        _socket.close();
+    }
+
+    /* core socket handlers */
+    // emit connect
+    _socket.on('connect', function() {
+        debug("Connected to " + url);
+        self.emit('connect');
+    });
+
+    // emit disconnect
+    _socket.on('disconnect', function() {
+        debug("Disconnected from " + url);
+        self.emit('disconnect');
+    });
+
+    /* data channel handlers */
+    // emit data
+    _socket.on('data', function(data, ack) {
+        debug("Received data " + data.sequence + ", ack required: " + ack ? true : false);
+        self.emit('data', new ClientMessage(data.sequence, data.data, ack));
+    });
+
+
+    /* retransmit channel handlers */
+    // emit retransmit
+    _socket.on('retransmit', function() {
+        debug("Will receive retransmit");
+        self.emit('retransmit');
+    });
+
+    /* error channel handlers */
+    // emit error
+    _socket.on('err', function(error) {
+        debug("Received error " + "(" + error.code + ":" + error.message + ")");
+        self.emit('error', error);
+    });
+
+    /* debug channel handlers */
+    // debug channel
+    _socket.on('debug', function(data) {
+        debug("Debug: " + data);
+        self.emit('debug', data);
+    });
+
+    /* control channel handlers */
+    // debug channel
+    _socket.on('control', function(control) {
+        var controlResponse = new ControlResponse(control);
+        debug("Received control response " + "(" + controlResponse.getControlID() + ":" + controlResponse.getSuccess() + ")");
+        self.emit('control', controlResponse);
+    });
+
+}
+
+Client.controlID = 0;
+
+// inherit from EventEmitter
+Client.prototype.__proto__ = events.EventEmitter.prototype;
+module.exports = Client;
 },{"./client-message.js":5,"./control-response.js":8,"./control.js":9,"./utils":11,"debug":12,"events":1,"socket.io-client":15}],7:[function(require,module,exports){
-
-
 var Buffer = require('./buffer.js');
 var Message = require('./message.js');
 var Control = require('./control.js');
@@ -618,391 +697,391 @@ var events = require('events');
 var Debug = require('debug');
 
 
-        var debug = new Debug('socket.io-queue:connection');
+var debug = new Debug('socket.io-queue:connection');
 
-        function Connection(socket, windowSize, maxBufferSize) {
+function Connection(socket, windowSize, maxBufferSize) {
 
-            if (socket == undefined) {
-                throw TypeError("Expected socket parameter");
-            }
+    if (socket == undefined) {
+        throw TypeError("Expected socket parameter");
+    }
 
-            // setup event listener
-            events.EventEmitter.call(this);
+    // setup event listener
+    events.EventEmitter.call(this);
 
-            var _socket = socket;
-            var _connectionID = Connection.connectionID++;
-            var _sequence = 1;
-            var _buffer = new Buffer(maxBufferSize);
-            var self = this;
-            var _window = windowSize;
-            var _sent = 0;
-            var _waitingAck = null;
-            var _lastAck = 0;
-            var _paused = false;
+    var _socket = socket;
+    var _connectionID = Connection.connectionID++;
+    var _sequence = 1;
+    var _buffer = new Buffer(maxBufferSize);
+    var self = this;
+    var _window = windowSize;
+    var _sent = 0;
+    var _waitingAck = null;
+    var _lastAck = 0;
+    var _paused = false;
 
-            this.getBuffer = function() {
-                return _buffer;
-            }
+    this.getBuffer = function() {
+        return _buffer;
+    }
 
-            this.getConnectionID = function() {
-                return _connectionID;
-            }
+    this.getConnectionID = function() {
+        return _connectionID;
+    }
 
-            this.getWindowSize = function() {
-                return _window;
-            }
+    this.getWindowSize = function() {
+        return _window;
+    }
 
-            // defines if we are currently waiting for an ack
-            this.isWaiting = function() {
-                return _waitingAck != null;
-            }
+    // defines if we are currently waiting for an ack
+    this.isWaiting = function() {
+        return _waitingAck != null;
+    }
 
-            // defines if we are currently paused
-            this.isPaused = function() {
-                return _paused;
-            }
+    // defines if we are currently paused
+    this.isPaused = function() {
+        return _paused;
+    }
 
-            // process acknowledgement
-            this.receiveAck = function(sequence) {
-                if (sequence == undefined) {
-                    throw new TypeError("Expected integer parameter");
-                }
-                self.emit('ack', sequence);
-                if (sequence == _waitingAck) {
-                    debug(self.getConnectionID() + ' :: Received ack ' + sequence);
-                    //self.waiting = false;
-                    _buffer.clearSequence(sequence);
-                    _waitingAck = null;
-                    _lastAck = sequence;
-                    self.sendData();
-                } else {
-                    debug(self.getConnectionID() + ' :: Received invalid ack ' + sequence);
-                }
-            }
-
-            // add data to the buffer for sending
-            this.pushData = function(data) {
-                if (data == undefined) {
-                    throw new TypeError("Expected integer parameter");
-                }
-                try {
-                    _buffer.push(new Message(_sequence++, data));
-                } catch (e) {
-                    debug(self.getConnectionID() + " :: Buffer overflow, closing connection");
-                    _socket.emit('err', {
-                        code: e.code,
-                        message: e.name
-                    });
-                    _socket.disconnect();
-                }
-                self.sendData();
-            }
-
-            // send data from the buffer down the socket
-            this.sendData = function() {
-                // loop sending unack'd messages until hit random or last message
-
-                // only send stuff if we're not waiting
-                if (!self.isWaiting() && !self.isPaused()) {
-
-                    var done = false;
-                    var callback = null;
-
-                    // loop through buffer
-                    var length = _buffer.getLength();
-                    for (var i = 0; i < length && !done; i++) {
-                        // if message isn't marked as already sent (i.e. sent and waiting on ack)
-                        if (!_buffer.get(i).getSent()) {
-                            _sent++;
-                            if (_sent >= _window) {
-                                // use receiveAck
-                                callback = self.receiveAck;
-                                _waitingAck = _buffer.get(i).getSequence();
-                                done = true;
-                                _sent = 0;
-                            }
-
-                            // mark message as sent and send it
-                            _buffer.get(i).setSent(true);
-                            debug(self.getConnectionID() + " :: " + "Sending sequence " + _buffer.get(i).getSequence());
-                            _socket.emit('data', _buffer.get(i).get(), callback);
-                            callback = null;
-                        }
-                    }
-                }
-            }
-
-            // retransmit data
-            this.retransmit = function() {
-                debug(self.getConnectionID() + " :: Retransmitting");
-                _sent = 0;
-                _buffer.unSend(_lastAck);
-                _waitingAck = null;
-                //_socket.emit("retransmit", { });
-                self.sendData();
-            }
-
-
-            /* core socket handlers */
-            // on disconnect
-            _socket.on('disconnect', function() {
-                self.emit('disconnect');
-                debug(self.getConnectionID() + ' :: Disconnected');
-            });
-
-            /* retransmit handlers */
-            // retransmit channel
-            _socket.on('retransmit', function(data) {
-                debug(self.getConnectionID() + ' :: Retransmitting');
-                self.emit('retransmit');
-                self.retransmit();
-            });
-
-            /* debug channel handlers */
-            // debug channel
-            _socket.on('debug', function(data) {
-                debug(self.getConnectionID() + ' :: ' + data);
-                self.emit('debug', data);
-            });
-
-
-            /* control channel handlers */
-            // debug channel
-            _socket.on('control', function(control_request) {
-                var control = new Control(control_request);
-                debug(self.getConnectionID() + ' :: Received control (' + control.getRequest());
-                self.emit('control', control);
-
-                switch (control.getControl()) {
-                    case Control.WINDOW:
-                        _window = control.getControlParameters().size;
-                        socket.emit('control', control.getResponse(true));
-                        break;
-                    case Control.PAUSE:
-                        _paused = true;
-                        socket.emit('control', control.getResponse(true));
-                        break;
-                    case Control.RESUME:
-                        _paused = false;
-                        socket.emit('control', control.getResponse(true));
-                        break;
-                    default:
-                        debug(self.getConnectionID() + ' :: Invalid control "' + control.getControl() + '"');
-                        socket.emit('control', control.getResponse(false));
-                }
-            });
-
-            debug(self.getConnectionID() + ' :: Connected ');
+    // process acknowledgement
+    this.receiveAck = function(sequence) {
+        if (sequence == undefined) {
+            throw new TypeError("Expected integer parameter");
         }
+        self.emit('ack', sequence);
+        if (sequence == _waitingAck) {
+            debug(self.getConnectionID() + ' :: Received ack ' + sequence);
+            //self.waiting = false;
+            _buffer.clearSequence(sequence);
+            _waitingAck = null;
+            _lastAck = sequence;
+            self.sendData();
+        } else {
+            debug(self.getConnectionID() + ' :: Received invalid ack ' + sequence);
+        }
+    }
 
-        Connection.connectionID = 0;
+    // add data to the buffer for sending
+    this.pushData = function(data) {
+        if (data == undefined) {
+            throw new TypeError("Expected integer parameter");
+        }
+        try {
+            _buffer.push(new Message(_sequence++, data));
+        } catch (e) {
+            debug(self.getConnectionID() + " :: Buffer overflow, closing connection");
+            _socket.emit('err', {
+                code: e.code,
+                message: e.name
+            });
+            _socket.disconnect();
+        }
+        self.sendData();
+    }
 
-        // inherit from EventEmitter
-        Connection.prototype.__proto__ = events.EventEmitter.prototype;
+    // send data from the buffer down the socket
+    this.sendData = function() {
+        // loop sending unack'd messages until hit random or last message
 
-        
-  module.exports=Connection;
+        // only send stuff if we're not waiting
+        if (!self.isWaiting() && !self.isPaused()) {
+
+            var done = false;
+            var callback = null;
+
+            // loop through buffer
+            var length = _buffer.getLength();
+            for (var i = 0; i < length && !done; i++) {
+                // if message isn't marked as already sent (i.e. sent and waiting on ack)
+                if (!_buffer.get(i).getSent()) {
+                    _sent++;
+                    if (_sent >= _window) {
+                        // use receiveAck
+                        callback = self.receiveAck;
+                        _waitingAck = _buffer.get(i).getSequence();
+                        done = true;
+                        _sent = 0;
+                    }
+
+                    // mark message as sent and send it
+                    _buffer.get(i).setSent(true);
+                    debug(self.getConnectionID() + " :: " + "Sending sequence " + _buffer.get(i).getSequence());
+                    _socket.emit('data', _buffer.get(i).get(), callback);
+                    callback = null;
+                }
+            }
+        }
+    }
+
+    // retransmit data
+    this.retransmit = function() {
+        debug(self.getConnectionID() + " :: Retransmitting");
+        _sent = 0;
+        _buffer.unSend(_lastAck);
+        _waitingAck = null;
+        //_socket.emit("retransmit", { });
+        self.sendData();
+    }
+
+
+    /* core socket handlers */
+    // on disconnect
+    _socket.on('disconnect', function() {
+        self.emit('disconnect');
+        debug(self.getConnectionID() + ' :: Disconnected');
+    });
+
+    /* retransmit handlers */
+    // retransmit channel
+    _socket.on('retransmit', function(data) {
+        debug(self.getConnectionID() + ' :: Retransmitting');
+        self.emit('retransmit');
+        self.retransmit();
+    });
+
+    /* debug channel handlers */
+    // debug channel
+    _socket.on('debug', function(data) {
+        debug(self.getConnectionID() + ' :: ' + data);
+        self.emit('debug', data);
+    });
+
+
+    /* control channel handlers */
+    // debug channel
+    _socket.on('control', function(control_request) {
+        var control = new Control(control_request);
+        debug(self.getConnectionID() + ' :: Received control (' + control.getRequest());
+        self.emit('control', control);
+
+        switch (control.getControl()) {
+            case Control.WINDOW:
+                _window = control.getControlParameters().size;
+                socket.emit('control', control.getResponse(true));
+                break;
+            case Control.PAUSE:
+                _paused = true;
+                socket.emit('control', control.getResponse(true));
+                break;
+            case Control.RESUME:
+                _paused = false;
+                socket.emit('control', control.getResponse(true));
+                break;
+            default:
+                debug(self.getConnectionID() + ' :: Invalid control "' + control.getControl() + '"');
+                socket.emit('control', control.getResponse(false));
+        }
+    });
+
+    debug(self.getConnectionID() + ' :: Connected ');
+}
+
+Connection.connectionID = 0;
+
+// inherit from EventEmitter
+Connection.prototype.__proto__ = events.EventEmitter.prototype;
+
+
+module.exports = Connection;
 },{"./buffer.js":4,"./control.js":9,"./message.js":10,"debug":12,"events":1}],8:[function(require,module,exports){
 var Utils = require('./utils.js');
 
-        function ControlResponse() {
+function ControlResponse() {
 
-            var _controlID = null;
-            var _success = null;
+    var _controlID = null;
+    var _success = null;
 
-            var _checkParams = function(controlID, success) {
-                if ((controlID == undefined || !Utils.isInt(controlID)) ||
-                    (success == undefined || typeof(success) != 'boolean')) {
-                    throw TypeError(ControlResponse.CONSTRUCTOR_TYPE_ERROR);
-                }
-            }
-
-            this.createFromRequest = function(controlResponse) {
-                _checkParams(controlResponse.control_id, controlResponse.success);
-                _controlID = controlResponse.control_id;
-                _success = controlResponse.success;
-            }
-
-            this.createFromParameters = function(controlID, success) {
-                _checkParams(controlID, success);
-                _controlID = controlID;
-                _success = success;
-            }
-
-            this.getControlID = function() {
-                return _controlID;
-            }
-
-            this.getSuccess = function() {
-                return _success;
-            }
-
-            this.format = function() {
-                return {
-                    control_id: this.getControlID(),
-                    success: this.getSuccess(),
-                };
-            }
-
-            this.create = function(arguments) {
-                switch (arguments.length) {
-                    case 1:
-                        this.createFromRequest(arguments[0]);
-                        break;
-                    case 2:
-                        this.createFromParameters(arguments[0], arguments[1]);
-                        break;
-                    default:
-                        throw TypeError(ControlResponse.CONSTRUCTOR_TYPE_ERROR);
-                }
-            }
-
-            this.create(arguments);
-
+    var _checkParams = function(controlID, success) {
+        if ((controlID == undefined || !Utils.isInt(controlID)) ||
+            (success == undefined || typeof(success) != 'boolean')) {
+            throw TypeError(ControlResponse.CONSTRUCTOR_TYPE_ERROR);
         }
+    }
 
-        ControlResponse.CONSTRUCTOR_TYPE_ERROR = "Expected either an integer and boolean or an object";
+    this.createFromRequest = function(controlResponse) {
+        _checkParams(controlResponse.control_id, controlResponse.success);
+        _controlID = controlResponse.control_id;
+        _success = controlResponse.success;
+    }
 
-    
-module.exports=ControlResponse;
+    this.createFromParameters = function(controlID, success) {
+        _checkParams(controlID, success);
+        _controlID = controlID;
+        _success = success;
+    }
+
+    this.getControlID = function() {
+        return _controlID;
+    }
+
+    this.getSuccess = function() {
+        return _success;
+    }
+
+    this.format = function() {
+        return {
+            control_id: this.getControlID(),
+            success: this.getSuccess(),
+        };
+    }
+
+    this.create = function(arguments) {
+        switch (arguments.length) {
+            case 1:
+                this.createFromRequest(arguments[0]);
+                break;
+            case 2:
+                this.createFromParameters(arguments[0], arguments[1]);
+                break;
+            default:
+                throw TypeError(ControlResponse.CONSTRUCTOR_TYPE_ERROR);
+        }
+    }
+
+    this.create(arguments);
+
+}
+
+ControlResponse.CONSTRUCTOR_TYPE_ERROR = "Expected either an integer and boolean or an object";
+
+
+module.exports = ControlResponse;
 },{"./utils.js":11}],9:[function(require,module,exports){
 var Utils = require('./utils.js');
 var ControlResponse = require('./control-response.js');
 
 
-        function Control() {
+function Control() {
 
-            var _control = null;
-            var _controlID = null;
-            var _controlParameters = null;
+    var _control = null;
+    var _controlID = null;
+    var _controlParameters = null;
 
-            var _checkParams = function(control, controlID) {
-                if ((control == undefined || !Utils.isInt(control)) ||
-                    (controlID == undefined || !Utils.isInt(controlID))) {
-                    throw TypeError(Control.CONSTRUCTOR_TYPE_ERROR);
-                }
-            }
-
-            this.createFromRequest = function(control) {
-                _checkParams(control.control, control.control_id);
-                _control = control.control;
-                _controlID = control.control_id;
-                _controlParameters = control.control_parameters;
-            }
-
-            this.createFromParameters = function(control, controlID, controlParameters) {
-                _checkParams(control, controlID);
-                _control = control;
-                _controlID = controlID;
-                _controlParameters = controlParameters;
-            }
-
-            this.getControl = function() {
-                return _control;
-            }
-
-            this.getControlID = function() {
-                return _controlID;
-            }
-
-            this.getControlParameters = function() {
-                return _controlParameters;
-            }
-
-            this.getResponse = function(success) {
-                return new ControlResponse(this.getControlID(), success).format();
-            }
-
-            this.getRequest = function(success) {
-                return {
-                    control: this.getControl(),
-                    control_id: this.getControlID(),
-                    control_parameters: this.getControlParameters()
-                };
-            }
-
-            this.create = function(arguments) {
-                switch (arguments.length) {
-                    case 1:
-                        this.createFromRequest(arguments[0]);
-                        break;
-                    case 2:
-                        this.createFromParameters(arguments[0], arguments[1]);
-                        break;
-                    case 3:
-                        this.createFromParameters(arguments[0], arguments[1], arguments[2]);
-                        break;
-                    default:
-                        throw TypeError(Control.CONSTRUCTOR_TYPE_ERROR);
-                }
-            }
-
-            this.create(arguments);
-
+    var _checkParams = function(control, controlID) {
+        if ((control == undefined || !Utils.isInt(control)) ||
+            (controlID == undefined || !Utils.isInt(controlID))) {
+            throw TypeError(Control.CONSTRUCTOR_TYPE_ERROR);
         }
+    }
 
-        Control.WINDOW = 1;
-        Control.PAUSE = 2;
-        Control.RESUME = 3;
+    this.createFromRequest = function(control) {
+        _checkParams(control.control, control.control_id);
+        _control = control.control;
+        _controlID = control.control_id;
+        _controlParameters = control.control_parameters;
+    }
 
-        Control.CONSTRUCTOR_TYPE_ERROR = "Expected either two integers and an optional object or an object";
+    this.createFromParameters = function(control, controlID, controlParameters) {
+        _checkParams(control, controlID);
+        _control = control;
+        _controlID = controlID;
+        _controlParameters = controlParameters;
+    }
 
-module.exports=Control;
+    this.getControl = function() {
+        return _control;
+    }
+
+    this.getControlID = function() {
+        return _controlID;
+    }
+
+    this.getControlParameters = function() {
+        return _controlParameters;
+    }
+
+    this.getResponse = function(success) {
+        return new ControlResponse(this.getControlID(), success).format();
+    }
+
+    this.getRequest = function(success) {
+        return {
+            control: this.getControl(),
+            control_id: this.getControlID(),
+            control_parameters: this.getControlParameters()
+        };
+    }
+
+    this.create = function(arguments) {
+        switch (arguments.length) {
+            case 1:
+                this.createFromRequest(arguments[0]);
+                break;
+            case 2:
+                this.createFromParameters(arguments[0], arguments[1]);
+                break;
+            case 3:
+                this.createFromParameters(arguments[0], arguments[1], arguments[2]);
+                break;
+            default:
+                throw TypeError(Control.CONSTRUCTOR_TYPE_ERROR);
+        }
+    }
+
+    this.create(arguments);
+
+}
+
+Control.WINDOW = 1;
+Control.PAUSE = 2;
+Control.RESUME = 3;
+
+Control.CONSTRUCTOR_TYPE_ERROR = "Expected either two integers and an optional object or an object";
+
+module.exports = Control;
 },{"./control-response.js":8,"./utils.js":11}],10:[function(require,module,exports){
 var Utils = require('./utils.js');
 
 
-        function Message(sequence, data) {
+function Message(sequence, data) {
 
-            if ((sequence == undefined || !Utils.isInt(sequence)) ||
-                (data == undefined)) {
-                throw TypeError("Expected integer and any");
-            }
+    if ((sequence == undefined || !Utils.isInt(sequence)) ||
+        (data == undefined)) {
+        throw TypeError("Expected integer and any");
+    }
 
-            var _sequence = sequence;
-            var _data = data;
-            var _sent = false;
+    var _sequence = sequence;
+    var _data = data;
+    var _sent = false;
 
-            // return structure for transmission
-            this.get = function() {
-                return {
-                    sequence: _sequence,
-                    data: _data
-                }
-            }
-
-            // getters and setters
-            this.getSent = function() {
-                return _sent;
-            }
-
-            this.setSent = function(sent) {
-                if (typeof(sent) != 'boolean') {
-                    throw TypeError("Expected boolean")
-                }
-                _sent = sent;
-            }
-
-            this.getSequence = function() {
-                return _sequence;
-            }
-
-            this.getData = function() {
-                return _data;
-            }
-
+    // return structure for transmission
+    this.get = function() {
+        return {
+            sequence: _sequence,
+            data: _data
         }
+    }
+
+    // getters and setters
+    this.getSent = function() {
+        return _sent;
+    }
+
+    this.setSent = function(sent) {
+        if (typeof(sent) != 'boolean') {
+            throw TypeError("Expected boolean")
+        }
+        _sent = sent;
+    }
+
+    this.getSequence = function() {
+        return _sequence;
+    }
+
+    this.getData = function() {
+        return _data;
+    }
+
+}
 module.exports = Message;
 },{"./utils.js":11}],11:[function(require,module,exports){
 var Utils = {
 
-  isInt: function(value) {
-            return !isNaN(value) &&
-                parseInt(Number(value)) == value &&
-                !isNaN(parseInt(value, 10));
+    isInt: function(value) {
+        return !isNaN(value) &&
+            parseInt(Number(value)) == value &&
+            !isNaN(parseInt(value, 10));
 
-        }
     }
+}
 
 module.exports = Utils;
 },{}],12:[function(require,module,exports){
