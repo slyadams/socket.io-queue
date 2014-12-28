@@ -19,7 +19,15 @@ var opts = {
     "reconnection": ((cli.reconnection == undefined) || cli.reconnection == "1") ? true : false,
 }
 
-var client = new Client(url, opts);
+var client;
+
+try {
+    client = new Client(url, opts);
+} catch (e) {
+    console.log("Error: " + e.message);
+    process.exit();
+}
+
 if (cli.ignore_retransmit_error) {
     client.setIgnoreRetransmitErrors(true);
 }

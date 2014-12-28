@@ -16,7 +16,7 @@ describe("Full communication", function() {
     var stubs, client, nsp, captured_data;
 
     beforeEach(function() {
-        client = new Client("ws://localhost:8080/nsp");
+        client = new Client("ws://localhost:8080/");
         captured_data = [];
         stubs = {
             onData: function(sequence, data, needs_ack) {
@@ -35,7 +35,7 @@ describe("Full communication", function() {
             client_message.done();
         });
 
-        nsp = io.of('/nsp');
+        nsp = io.of('/');
         io.listen(8080);
     });
 

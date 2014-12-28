@@ -7,7 +7,6 @@ module.exports = exports = function(type) {
     } else if (type == 'server') {
         return Connection;
     } else {
-        console.log("Don't recognize type " + type);
         throw TypeError("Expected 'client' or 'server'");
     }
 }

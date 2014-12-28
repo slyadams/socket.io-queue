@@ -8,6 +8,9 @@ describe("Connection", function() {
             emit: function(channel, data) {},
             disconnect: function() {},
             on: function(event) {},
+            nsp: {
+                name: '/'
+            }
         };
 
         spyOn(socket, 'emit');

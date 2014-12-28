@@ -27,12 +27,12 @@ var buffer_display_delay = cli.buffer_delay || 5000;
 var window_size = cli.window_size || 5;
 var buffer_size = cli.buffer_size || 100;
 
-var nsp = io.of('/nsp');
+//var nsp = io.of('/');
 io.listen(port);
 
 // you can pass in a parameter to control how often to push data
 
-nsp.on('connection', function(socket) {
+io.on('connection', function(socket) {
     var conn = new Connection(socket, window_size, buffer_size);
 
     conn.on('ack', function(sequence) {

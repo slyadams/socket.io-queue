@@ -1,83 +1,109 @@
 var Client = require('../../../')('client');
 var client;
-var _data_container = $("#data_container");
-var _error_container = $("#error_container");
-var _debug_container = $("#debug_container");
 
 function log(container, content) {
-    container.prepend("<div>"+content+"</div>");    
+    container.prepend("<div>" + content + "</div>");
 }
 
-function setButtonsDisabled(disabled) {
+function setControlButtonsDisabled(disabled) {
     $(".control-button").attr('disabled', disabled);
+}
+
+function setConnectButtonDisabled(disabled) {
+    $("#connect_button").attr('disabled', disabled);
 }
 
 $(document).ready(function() {
 
+    var _data_container = $("#data_container");
+    var _error_container = $("#error_container");
+    var _debug_container = $("#debug_container");
+
     $("#connect_button").click(function() {
-        console.log("Client = "+client);
         if (client == undefined) {
+            setConnectButtonDisabled(true);
             var _url = "ws://" + $("#url").val();
-            console.log("Connecting to '"+_url+"'");
-            client = new Client(_url);
-            $(this).html("Disconnect");
+            log(_debug_container, "Connecting to '" + _url + "'");
 
-            client.on('connect', function() {
-                log(_debug_container, 'Connected');
-                setButtonsDisabled(false);
-            });
+            try {
+                client = new Client(_url, {
+                    "reconnection": false,
+                    "timeout": 5000
+                });
+            } catch (e) {
+                log(_error_container, "Error: " + e.message);
+            }
 
-            client.on('disconnect', function() {
-                log(_debug_container, 'Disconnected');
-                setButtonsDisabled(true);
-            });
+            if (client) {
+                client.on('connect', function() {
+                    log(_debug_container, 'Connected');
 
-            client.on('data', function(client_message) {
-                console.log("Received data " + client_message.getSequence());
-                log(_data_container, "Received data " + client_message.getSequence());
-                if (client_message.done()) {
-                    log(_data_container, "Sent ack");
-                }
-            });
+                    $("#connect_button").html("Disconnect");
+                    setControlButtonsDisabled(false);
+                    setConnectButtonDisabled(false);
 
-            client.on('error', function(error) {
-                log(_error_container, "Received error " + "(" + error.code + ":" + error.message + ")");
-            });
+                    client.on('disconnect', function() {
+                        log(_debug_container, 'Disconnected');
+                        setControlButtonsDisabled(true);
+                    });
 
-            client.on('control', function(control) {
-                log(_debug_container, "Received control response " + "(" + control.format() + ")");
-            });
+                    client.on('data', function(client_message) {
+                        log(_data_container, "Received data " + client_message.getSequence());
+                        if (client_message.done()) {
+                            log(_data_container, "Sent ack");
+                        }
+                    });
+
+                    client.on('error', function(error) {
+                        log(_error_container, "Received error " + "(" + error.code + ":" + error.message + ")");
+                    });
+
+                    client.on('control', function(control) {
+                        log(_debug_container, "Received control response " + "(" + control.format() + ")");
+                    });
+
+                });
+
+                client.on('connect_error', function(error) {
+                    setControlButtonsDisabled(false);
+                    setConnectButtonDisabled(false);
+                    log(_error_container, "Connect error '" + error + "'");
+                    client = undefined;
+                });
+            } else {
+                setConnectButtonDisabled(false);
+            }
         } else {
             console.log("Disconnecting");
             client.close();
             client = undefined;
-            $(this).html("Connect");
+            $("#connect_button").html("Connect");
         }
     });
 
     $("#pause_button").click(function() {
         if (client) {
-            console.log("Pausing");
+            log(_debug_container, "Pausing");
             client.pause();
         }
     });
 
     $("#resume_button").click(function() {
         if (client) {
-            console.log("Resuming");
+            log(_debug_container, "Resuming");
             client.resume();
         }
     });
 
     $("#retransmit_button").click(function() {
         if (client) {
-            console.log("Retransmit");
+            log(_debug_container, "Retransmitting");
             client.retransmit();
         }
     });
 
-    for (var i=1; i<=10; i++) {
-        $("#window_"+i).click(function(window_size) {
+    for (var i = 1; i <= 10; i++) {
+        $("#window_" + i).click(function(window_size) {
             client.setWindow(window_size);
         }.bind(this, i));
     }
