@@ -28,7 +28,7 @@ describe("Client", function() {
         spyOn(socket, 'disconnect');
         spyOn(socket, 'on');
         spyOn(socket, 'close');
-        c = new Client('', socket);
+        c = new Client(socket);
     });
 
     it("is created", function() {

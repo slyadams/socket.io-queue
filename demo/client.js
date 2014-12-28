@@ -7,24 +7,32 @@ cli
     .option('-u, --url [url]', 'URL to connect to, default="ws://localhost:8080/nsp"')
     .option('-i, --ignore_retransmit_error [buffer_delay]', 'Whether to ignore retransmit errors, default=0')
     .option('-d, --process_delay [process_delay]', 'How long to delay processing a message in ms, default=1000')
-    .parse(process.argv);
+    .option('-t, --connect_timeout [connect_timeout]', 'How long to wait for a connection, default=5000')
+    .option('-r, --reconnection [reconnection]', 'Whether to reconnect automatically, default=1')
+
+.parse(process.argv);
 
 var url = cli.url || 'ws://localhost:8080/nsp';
 var process_delay = cli.process_delay || 1000;
-var client = new Client(url);
+var opts = {
+    "timeout": cli.connect_timeout || 5000,
+    "reconnection": ((cli.reconnection == undefined) || cli.reconnection == "1") ? true : false,
+}
+
+var client = new Client(url, opts);
 if (cli.ignore_retransmit_error) {
     client.setIgnoreRetransmitErrors(true);
 }
 
 var last_sequence = 0;
 
-// create key handler
-var stdin = process.stdin;
-stdin.setRawMode(true);
-stdin.setEncoding('utf8');
-
 client.on('connect', function() {
     console.log('Connected');
+});
+
+client.on('connect_error', function(err) {
+    console.log("Connection error '" + err + "'");
+    process.exit();
 });
 
 client.on('disconnect', function() {
@@ -52,15 +60,13 @@ client.on('error', function(error) {
 client.on('control', function(control) {
     console.log("Received control response " + "(" + control.format() + ")");
 });
-/*client.on('retransmit_error', function(data, can_continue) {
-  console.log('Retransmit errors '+can_continue);
-  if (!can_continue) {
-    process.exit();
-  }
-});*/
 
-// setup key handlers to send retransmit requests
-stdin.on('data', function(letter) {
+// create key handler
+var stdIn = process.stdin;
+stdIn.setRawMode(true);
+stdIn.setEncoding('utf8');
+
+stdIn.on('data', function(letter) {
     if (letter == 'r') {
 
     }
