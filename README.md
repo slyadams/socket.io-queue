@@ -29,9 +29,26 @@ var client = new Client('ws://localhost:9876', {});
 
 Exposed by `require('/.')('client')`.
 
+constructor
+this.retransmit
+this.setWindow(windowSize)
+this.pause
+this.resume 
+this.debug
+this.isConnected
+this.close
+
 ###Server
 
 Exposed by `require('/.')('server')`.
+
+constructor
+this.getBuffer
+this.getConnectionID
+this.getWindowSize
+this.isWaiting
+this.isPaused
+this.pushData(data)
 
 ##Events
 
