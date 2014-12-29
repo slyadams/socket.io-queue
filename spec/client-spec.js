@@ -54,8 +54,8 @@ describe("Client", function() {
     });
 
     it("retransmits", function() {
-        c.retransmit();
-        expect(socket.emit).toHaveBeenCalledWith('retransmit');
+        var control = c.retransmit();
+        _checkControlResult(socket, control, Control.RETRANSMIT, undefined);
     });
 
     it("pauses", function() {

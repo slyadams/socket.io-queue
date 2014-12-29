@@ -5,7 +5,6 @@ var cli = require('commander');
 cli
     .version('0.0.1')
     .option('-u, --url [url]', 'URL to connect to, default="ws://localhost:8080/nsp"')
-    .option('-i, --ignore_retransmit_error [buffer_delay]', 'Whether to ignore retransmit errors, default=0')
     .option('-d, --process_delay [process_delay]', 'How long to delay processing a message in ms, default=1000')
     .option('-t, --connect_timeout [connect_timeout]', 'How long to wait for a connection, default=5000')
     .option('-r, --reconnection [reconnection]', 'Whether to reconnect automatically, default=1')
@@ -26,10 +25,6 @@ try {
 } catch (e) {
     console.log("Error: " + e.message);
     process.exit();
-}
-
-if (cli.ignore_retransmit_error) {
-    client.setIgnoreRetransmitErrors(true);
 }
 
 var last_sequence = 0;
