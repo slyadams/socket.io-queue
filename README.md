@@ -30,25 +30,24 @@ var client = new Client('ws://localhost:9876', {});
 Exposed by `require('/.')('client')`.
 
 constructor
-this.retransmit
-this.setWindow(windowSize)
-this.pause
-this.resume 
-this.debug
-this.isConnected
-this.close
+retransmit() 
+setWindow(windowSize)
+pause() requests the server to pause the stream
+resume() requests the server to resume the stream
+isConnected() returns whether the client is currently connected
+close() closes the client
+debug(debug)
 
 ###Server
 
 Exposed by `require('/.')('server')`.
 
 constructor
-this.getBuffer
-this.getConnectionID
-this.getWindowSize
-this.isWaiting
-this.isPaused
-this.pushData(data)
+getConnectionID() returns a unique internal connection identifier
+getWindowSize() returns the current acknowledgement window size
+isWaiting() returns whether the server is currently waiting on an acknowledgement before sending more data
+isPaused() returns whether the stream is currently paused
+pushData(data) pushes the data object into the server's send buffer
 
 ##Events
 
