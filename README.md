@@ -33,7 +33,6 @@ Exposed by `require('/.')('client')`.
 
 Exposed by `require('/.')('server')`.
 
-
 ##Events
 
 The client and server modules emit events.
@@ -42,7 +41,7 @@ The client and server modules emit events.
           
 
 * `connect` on client connect
-* `disconnect`  on client disconnect
+* `disconnect` on client disconnect
 * `data` on receipt of a data message, with parameter
 ** `data_obj` the data object received
 * `error` on receipt of an error message, with parameter
@@ -50,62 +49,14 @@ The client and server modules emit events.
 * `debug` on receipt of a debug message, with parameter
 ** `debug_obj` the debug object received
 * `control` on receipt of a control response message (i.e. response to a control request), with parameter
-* `control_response_obj` the control response object received
+** `control_response_obj` the control response object received
 
 ###Server
 
-self.emit('disconnect');
-self.emit('retransmit');
-self.emit('ack', sequence);
-self.emit('debug', data);
-self.emit('control', control);
-
-
-##Protocol
-
-
-
-Retransmit ("retransmit"):
-  request/response: {}
-
-Debug ("debug)"
-  Any object can be sent
-
-
-Control ("control")
-  request:
-    {
-      control_id: control_id,
-      control: window
-      control_parameters: {
-        size: integer
-      }
-    }
-
-    {
-      control_id: control_id,
-      control: pause
-      control_parameters: { }
-    }
-
-    {
-      control_id: control_id,
-      control: resume
-      control_parameters: { }
-    }
-
-  response:
-    {
-      control_id: control_id,
-      success: true/false
-    }
-
-Error ("err")
-  {
-      // error code
-      code: code,
-
-      // error message
-      message: message
-    }
-  
+* `disconnect` on client disconnect
+* `ack` on receipt of an acknowledgment, with parameter
+** `sequence` the sequence number which the client is acknowledging
+* `control` on receipt of a control message
+** `control_response_obj` the control object received
+* `debug` on receipt of a debug message, with parameter
+** `debug_obj` the debug object received
