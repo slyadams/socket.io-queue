@@ -35,6 +35,8 @@ io.listen(port);
 io.on('connection', function(socket) {
     var conn = new Connection(socket, window_size, buffer_size);
 
+    consolePrint(conn, "Connected");
+
     conn.on('ack', function(sequence) {
         consolePrint(conn, "Received ack " + sequence);
     });

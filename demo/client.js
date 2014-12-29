@@ -12,7 +12,7 @@ cli
 
 .parse(process.argv);
 
-var url = cli.url || 'ws://localhost:8080/nsp';
+var url = cli.url || 'ws://localhost:8080/';
 var process_delay = cli.process_delay || 1000;
 var opts = {
     "timeout": cli.connect_timeout || 5000,

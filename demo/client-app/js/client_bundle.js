@@ -306,7 +306,7 @@ var Client = require('../../../')('client');
 var client;
 
 function log(container, content) {
-    container.prepend("<div>"+content+"</div>");    
+    container.prepend("<div>" + content + "</div>");
 }
 
 function setControlButtonsDisabled(disabled) {
@@ -327,12 +327,16 @@ $(document).ready(function() {
         if (client == undefined) {
             setConnectButtonDisabled(true);
             var _url = "ws://" + $("#url").val();
-            log(_debug_container, "Connecting to '"+_url+"'");
-            
+            log(_debug_container, "Connecting to '" + _url + "'");
+
             try {
-                client = new Client(_url, {"reconnection": false, "timeout": 5000});
+                client = new Client(_url, {
+                    "reconnection": false,
+                    "timeout": 5000,
+                    "multiplex": false
+                });
             } catch (e) {
-                log(_error_container, "Error: "+e.message);
+                log(_error_container, "Error: " + e.message);
             }
 
             if (client) {
@@ -403,8 +407,8 @@ $(document).ready(function() {
         }
     });
 
-    for (var i=1; i<=10; i++) {
-        $("#window_"+i).click(function(window_size) {
+    for (var i = 1; i <= 10; i++) {
+        $("#window_" + i).click(function(window_size) {
             client.setWindow(window_size);
         }.bind(this, i));
     }
@@ -420,7 +424,6 @@ module.exports = exports = function(type) {
     } else if (type == 'server') {
         return Connection;
     } else {
-        console.log("Don't recognize type " + type);
         throw TypeError("Expected 'client' or 'server'");
     }
 }
@@ -531,7 +534,7 @@ Buffer.OverFlowError = function() {}
 
 module.exports = Buffer;
 },{"./utils.js":11,"debug":12}],5:[function(require,module,exports){
-var Utils = require('./utils.js');
+ var Utils = require('./utils.js');
 var Debug = require('debug');
 
 var debug = new Debug('socket.io-queue:client-message');
@@ -567,7 +570,10 @@ function ClientMessage(sequence, data, ack) {
     this.done = function() {
         if (this.needsAck()) {
             debug("Sending ack for " + _sequence);
-            return _ack(_sequence);
+            _ack(_sequence);
+            return true;
+        } else {
+            return false;
         }
     }
 
@@ -758,27 +764,19 @@ function Connection(socket, windowSize, maxBufferSize) {
         throw TypeError("Expected socket parameter");
     }
 
-    if (socket.nsp.name != "/") {
-        debug(self.getConnectionID() + " :: Namespace invalid");
-        socket.emit('err', {
-            code: 123,
-            message: "Invalid namespace '"+socket.nsp.name+"'"
-        });
-    }
-
-    // setup event listener
-    events.EventEmitter.call(this);
-
+    var self = this;
     var _socket = socket;
     var _connectionID = Connection.connectionID++;
     var _sequence = 1;
     var _buffer = new Buffer(maxBufferSize);
-    var self = this;
     var _window = windowSize;
     var _sent = 0;
     var _waitingAck = null;
     var _lastAck = 0;
     var _paused = false;
+
+    // setup event listener
+    events.EventEmitter.call(this);
 
     this.getBuffer = function() {
         return _buffer;

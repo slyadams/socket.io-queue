@@ -42,11 +42,11 @@ describe("Client Message", function() {
     });
 
     it("acks", function() {
-        expect(m2.done()).toBe(123);
+        expect(m2.done()).toBe(true);
     });
 
     it("doesn't ack", function() {
-        expect(m.done()).toBe(undefined);
+        expect(m.done()).toBe(false);
     });
 
     it("sets sequence", function() {

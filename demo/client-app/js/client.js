@@ -28,7 +28,8 @@ $(document).ready(function() {
             try {
                 client = new Client(_url, {
                     "reconnection": false,
-                    "timeout": 5000
+                    "timeout": 5000,
+                    "multiplex": false
                 });
             } catch (e) {
                 log(_error_container, "Error: " + e.message);
