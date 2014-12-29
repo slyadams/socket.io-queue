@@ -41,16 +41,16 @@ The client and server modules emit events.
 ###Client         
           
 
-*`connect` on client connect
-*`disconnect`  on client disconnect
-*`data` on receipt of a data message, with parameter
-**`data_obj` the data object received
-*`error` on receipt of an error message, with parameter
-**`error_obj` the error object received
-*`debug` on receipt of a debug message, with parameter
-**`debug_obj` the debug object received
-*`control` on receipt of a control response message (i.e. response to a control request), with parameter
-*`control_response_obj` the control response object received
+* `connect` on client connect
+* `disconnect`  on client disconnect
+* `data` on receipt of a data message, with parameter
+** `data_obj` the data object received
+* `error` on receipt of an error message, with parameter
+** `error_obj` the error object received
+* `debug` on receipt of a debug message, with parameter
+** `debug_obj` the debug object received
+* `control` on receipt of a control response message (i.e. response to a control request), with parameter
+* `control_response_obj` the control response object received
 
 ###Server
 
