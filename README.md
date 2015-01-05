@@ -12,7 +12,7 @@ The queue allows for the easy implementation of client/server architecture with 
 To create a message server:
 
 ```js
-var Connection = require('require('./')('server');
+var Connection = require('./')('server');
 var io = require('socket.io')();
 io.on('connection', function(socket){
   var connection = new Connection(socket, window_size, buffer_size);
