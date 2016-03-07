@@ -2,6 +2,7 @@
   "author": "Simon Adams",
   "name": "socket.io-queue",
   "description": "Message queue for socket-io.",
+  "version": "0.0.1",
   "keywords": [
     "realtime",
     "queue",
@@ -17,14 +18,15 @@
     "type": "git",
     "url": "git://github.com/slyadams/socket.io-queue"
   },
-  "version": "0.0.1",
+  "scripts": {
+    "test": "jasmine-node spec/webservice.spec.js"
+  },
   "repository": {
     "url": ""
   },
   "dependencies": {
     "socket.io": ">=1.2.1",
     "socket.io-client": ">=1.2.1",
-    "amdefine" : ">=0.1.0",
     "debug": "0.7.4"
   },
   "devDependencies": {

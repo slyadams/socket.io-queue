@@ -3,7 +3,7 @@
 socket-io-queue is a windowed, acknowledgement based message queue using socket.io as a transport. It uses a 
 configurable buffer and window and supports retransmits, pausing and resuming. The server module runs in Node and the client module can be used either in Node or in a browser (e.g. using Browserify). 
 
-The queue is acknlowdgement based in that if the server sends a certain number of messages (known as the `window`, which is configurable by the user) without receiving an acknlowledgement from the client. When the client sends an acknowledgement is received, if the server is waiting it will resume sending messages, if the server isn't waiting it updates to internally reset the window. During operation the server buffers messages which are cleared once an appropriate acknlowedgement is recevied. The size of this buffer is configurable by the user and once the buffer fills up, the connection is closed and an error event emitted in the server.
+The queue is acknlowdgement based in that the server ooly sends a certain number of messages (known as the `window`, which is configurable by the user) without receiving an acknlowledgement from the client. When the client sends an acknowledgement, if the server is waiting it will resume sending messages, if the server isn't waiting it updates to internally reset the window. During operation the server buffers messages which are cleared once an appropriate acknlowedgement is recevied. The size of this buffer is configurable by the user and once the buffer fills up, the connection is closed and an error event emitted in the server.
 
 The queue allows for the easy implementation of client/server architecture with intelligent flow control based on the rate at which the client can process messages.
 
