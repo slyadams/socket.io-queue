@@ -27,9 +27,9 @@ var Client = require('.')('client');
 var client = new Client('ws://localhost:9876', {});
 ```
 
-##API
+## API
 
-###Client
+### Client
 
 Exposed by `require('/.')('client')`.
 
@@ -44,7 +44,7 @@ Exposed by `require('/.')('client')`.
 * `close()` closes the client
 * `debug(debugObj)` sends `debugObj` to the server using the debug channel 
 
-###Server
+### Server
 
 Exposed by `require('/.')('server')`.
 
@@ -58,11 +58,11 @@ Exposed by `require('/.')('server')`.
 * `isPaused()` returns whether the stream is currently paused
 * `pushData(dataObj)` pushes `dataObj` into the server's send buffer
 
-##Events
+## Events
 
 The client and server modules emit events.
 
-###Client         
+### Client         
           
 * `connect` on client connect
 * `disconnect` on client disconnect
@@ -79,7 +79,7 @@ The client and server modules emit events.
 * `control` on receipt of a control response message (i.e. response to a control request), with parameter
     * `control_response_obj` the control response object received
 
-###Server
+### Server
 
 * `disconnect` on client disconnect
 * `ack` on receipt of an acknowledgment, with parameter
@@ -89,6 +89,6 @@ The client and server modules emit events.
 * `debug` on receipt of a debug message, with parameter
     * `debug_obj` the debug object received
 
-##Future Plans
+## Future Plans
 
 Plans to add features to support namespaces, elegant multiplexing and a simple 'query' protocol from client to server.
